@@ -7,9 +7,9 @@
 - LDR
 - LED
 ## Phần mềm
--PlatformIO
--Giao thức MQTT(HiveMQ)
--Node-RED và Dashboard
+- PlatformIO
+- Giao thức MQTT(HiveMQ)
+- Node-RED và Dashboard
 ## Đặc trưng
 - Tự động điều chỉnh bật tắt ánh sáng dựa trên ánh sáng xung quanh
 - Giám sát từ xa mức độ ánh sáng và trạng thái LED
