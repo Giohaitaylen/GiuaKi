@@ -7,9 +7,9 @@
 - LDR
 - LED
 ## Phần mềm
--PlatformIO
--Giao thức MQTT(HiveMQ)
--Node-RED và Dashboard
+- PlatformIO
+- Giao thức MQTT(MQTTX)
+- Node-RED và Dashboard
 ## Đặc trưng
 - Tự động điều chỉnh bật tắt ánh sáng dựa trên ánh sáng xung quanh
 - Giám sát từ xa mức độ ánh sáng và trạng thái LED
@@ -24,13 +24,17 @@
 ## Kết quả đo được
 
 ![Hình 1](images/hinh1.jpg "Hình 1")
-**Hình 1** 
+**Hình 1**   
 
 ![Hình 2](images/hinh2.jpg "Hình 2")
-**Hình 2**   
+**Hình 2** 
+
+## Kết nối với Node-red
 
 ![Hình 3](images/hinh3.jpg "Hình 3")
 **Hình 3** 
 
-## Kết nối với Node-red
--Do một lỗi nào đó nên em vẫn chưa thể kết nối với node-red để giám sát và điều khiển
+![Hình 4](images/hinh4.jpg "Hình 4")
+**Hình 4** 
+
+

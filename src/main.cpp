@@ -1,113 +1,96 @@
-#include <Arduino.h>
-#include "secrets/wifi.h"
-#include "wifi_connect.h"
-#include <WiFiClientSecure.h>
-#include "ca_cert.h"
+#include <WiFi.h>
 #include <PubSubClient.h>
-#include "secrets/mqtt.h"
-#include <Ticker.h>
 
-namespace
-{
-    const char *ssid = WiFiSecrets::ssid;
-    const char *password = WiFiSecrets::pass;
-    const char *echo_topic = "esp32/echo_test";
-    unsigned int publish_count = 0;
-    uint16_t keepAlive = 15;    // seconds (default is 15)
-    uint16_t socketTimeout = 5; // seconds (default is 15)
-}
+// Wi-Fi credentials
+const char* ssid = "Nam Mo Adidaphat 2.4G";
+const char* password = "huyen299@";
 
-WiFiClientSecure tlsClient;
-PubSubClient mqttClient(tlsClient);
+// MQTT broker details
+const char* mqtt_server = "broker.emqx.io";
+const int mqtt_port = 1883;
+const char* mqtt_topic_pub = "home/lightSensor";
+const char* mqtt_topic_sub = "home/ledControl";
 
-Ticker mqttPulishTicker;
+WiFiClient espClient;
+PubSubClient client(espClient);
 
-const int ledPin = 2;              // GPIO2 (Built-in LED on some ESP32 boards)
-const int lightSensorPin = 34;     // Analog input pin for light sensor
+const int ledPin = 2;
+const int lightSensorPin = 34;
+int lightThreshold = 50; 
 
-int lightThreshold = 50;
-
-void mqttPublish()
-{
-    Serial.print("Publishing: ");
-    Serial.println(publish_count);
-    mqttClient.publish(echo_topic, String(publish_count).c_str(), false);
-    publish_count++;
-}
-
-void mqttCallback(char *topic, byte *payload, unsigned int length)
-{
-    Serial.printf("From %s:  ", topic);
-    for (int i = 0; i < length; i++)
-    {
-        Serial.print((char)payload[i]);
-    }
-    Serial.println();
-}
-
-void mqttReconnect()
-{
-    while (!mqttClient.connected())
-    {
-        Serial.println("Attempting MQTT connection...");
-        String client_id = "esp32-client-";
-        client_id += String(WiFi.macAddress());
-        if (mqttClient.connect(client_id.c_str(), MQTT::mqtt_user, MQTT::mqtt_password))
-        {
-            Serial.print(client_id);
-            Serial.println(" connected");
-            mqttClient.subscribe(echo_topic);
-        }
-        else
-        {
-            Serial.print("MTTT connect failed, rc=");
-            Serial.print(mqttClient.state());
-            Serial.println(" try again in 1 seconds");
-            delay(1000);
-        }
-    }
-}
-
-void setup()
-{
-    Serial.begin(115200);
-    delay(10);
-    pinMode(ledPin, OUTPUT);
-    digitalWrite(ledPin, LOW); 
-    setup_wifi(ssid, password);
-    tlsClient.setCACert(ca_cert);
-    mqttClient.setCallback(mqttCallback);
-    mqttClient.setServer(MQTT::mqtt_server, MQTT::mqtt_port);
-    mqttPulishTicker.attach(1, mqttPublish);
-}
-
-void loop()
-{
-  if (WiFi.status() != WL_CONNECTED) {
-     Serial.println("WiFi disconnected, attempting reconnection");
-     setup_wifi();
-     }
-
-  if (!mqttClient.connected()) {
-    mqttReconnect();
+void setup_wifi() {
+  delay(10);
+  Serial.println("Connecting to Wi-Fi...");
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
   }
-  mqttClient.loop();
+  Serial.println("Connected!");
+}
 
-  // Read the light sensor value
+void callback(char* topic, byte* message, unsigned int length) {
+  String msg;
+  for (int i = 0; i < length; i++) {
+    msg += (char)message[i];
+  }
+  Serial.print("Message arrived on topic: ");
+  Serial.println(topic);
+  Serial.print("Message: ");
+  Serial.println(msg);
+
+  if (String(topic) == mqtt_topic_sub) {
+    if (msg == "ON") {
+      digitalWrite(ledPin, HIGH);
+    } else if (msg == "OFF") {
+      digitalWrite(ledPin, LOW);
+    }
+  }
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    if (client.connect("ESP32Client")) {
+      Serial.println("Connected to MQTT broker");
+      client.subscribe(mqtt_topic_sub);
+    } else {
+      Serial.print("Failed, rc=");
+      Serial.print(client.state());
+      delay(2000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+  setup_wifi();
+  client.setServer(mqtt_server, mqtt_port);
+  client.setCallback(callback);
+  reconnect();
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
   int lightValue = analogRead(lightSensorPin);
   Serial.print("Light Sensor Value: ");
   Serial.println(lightValue);
 
   // Publish light sensor data
   String lightString = String(lightValue);
-  mqttClient.publish(MQTT::mqtt_topic_pub, lightString.c_str());
+  client.publish(mqtt_topic_pub, lightString.c_str());
 
-  // Automatic LED control based on light sensor value
+  // Automatic LED control based on light sensor
   if (lightValue < lightThreshold) {
-    digitalWrite(ledPin, HIGH); // Turn on LED
+    digitalWrite(ledPin, HIGH);
   } else {
-    digitalWrite(ledPin, LOW);  // Turn off LED
+    digitalWrite(ledPin, LOW);
   }
 
-  delay(2000); // Adjust the delay as needed
+  delay(1000);
 }
