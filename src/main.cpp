@@ -18,43 +18,59 @@ const int ledPin = 2;
 const int lightSensorPin = 34;
 int lightThreshold = 50; 
 
-void setup_wifi() {
+void setup_wifi() 
+{
   delay(10);
   Serial.println("Connecting to Wi-Fi...");
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) 
+  {
     delay(500);
     Serial.print(".");
   }
   Serial.println("Connected!");
 }
 
-void callback(char* topic, byte* message, unsigned int length) {
+void callback(char* topic, byte* payload, unsigned int length) 
+{
   String msg;
-  for (int i = 0; i < length; i++) {
-    msg += (char)message[i];
+  for (unsigned int i = 0; i < length; i++) 
+  {
+    msg += (char)payload[i];
   }
-  Serial.print("Message arrived on topic: ");
-  Serial.println(topic);
-  Serial.print("Message: ");
+  Serial.print("Message arrived [");
+  Serial.print(topic);
+  Serial.print("]: ");
   Serial.println(msg);
 
-  if (String(topic) == mqtt_topic_sub) {
-    if (msg == "ON") {
+  if (String(topic) == "home/ledControl") 
+  {
+    if (msg == "ON") 
+    {
       digitalWrite(ledPin, HIGH);
-    } else if (msg == "OFF") {
+      Serial.println("LED turned ON via MQTT");
+    } 
+    else if (msg == "OFF") 
+    {
       digitalWrite(ledPin, LOW);
+      Serial.println("LED turned OFF via MQTT");
     }
   }
 }
 
-void reconnect() {
-  while (!client.connected()) {
+
+void reconnect() 
+{
+  while (!client.connected()) 
+  {
     Serial.print("Attempting MQTT connection...");
-    if (client.connect("ESP32Client")) {
+    if (client.connect("ESP32Client")) 
+    {
       Serial.println("Connected to MQTT broker");
-      client.subscribe(mqtt_topic_sub);
-    } else {
+      client.subscribe("home/ledControl");
+    } 
+    else 
+    {
       Serial.print("Failed, rc=");
       Serial.print(client.state());
       delay(2000);
@@ -62,7 +78,8 @@ void reconnect() {
   }
 }
 
-void setup() {
+void setup() 
+{
   Serial.begin(115200);
   pinMode(ledPin, OUTPUT);
   setup_wifi();
@@ -71,8 +88,10 @@ void setup() {
   reconnect();
 }
 
-void loop() {
-  if (!client.connected()) {
+void loop() 
+{
+  if (!client.connected()) 
+  {
     reconnect();
   }
   client.loop();
@@ -86,9 +105,12 @@ void loop() {
   client.publish(mqtt_topic_pub, lightString.c_str());
 
   // Automatic LED control based on light sensor
-  if (lightValue < lightThreshold) {
+  if (lightValue < lightThreshold) 
+  {
     digitalWrite(ledPin, HIGH);
-  } else {
+  } 
+  else 
+  {
     digitalWrite(ledPin, LOW);
   }
 

@@ -7,9 +7,11 @@
 - Tạo hệ thống chiếu sáng thông minh tự động điều chỉnh dựa trên mức độ ánh sáng xung quanh. Hệ thống sử dụng bo mạch phát triển ESP32 được kết nối với cảm biến ánh sáng và đèn LED . Hệ thống giao tiếp với môi giới MQTT trực tuyến, cho phép giám sát và điều khiển theo thời gian thực thông qua Bảng điều khiển Node-RED có thể truy cập từ máy tính và điện thoại thông minh
 
 ## Phần cứng
+
 - ESP32
 - LDR
 - LED
+
 ## Phần mềm
 
 - PlatformIO
