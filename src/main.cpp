@@ -1,34 +1,30 @@
-#include <WiFi.h>
+#include <Arduino.h>
+#include "secrets/wifi.h"
+#include "wifi_connect.h"
+#include <WiFiClientSecure.h>
+#include "ca_cert.h"
+#include "secrets/mqtt.h"
 #include <PubSubClient.h>
-
-// Wi-Fi credentials
-const char* ssid = "Nam Mo Adidaphat 2.4G";
-const char* password = "huyen299@";
-
-// MQTT broker details
-const char* mqtt_server = "broker.emqx.io";
-const int mqtt_port = 1883;
-const char* mqtt_topic_pub = "home/lightSensor";
-const char* mqtt_topic_sub = "home/ledControl";
+#include <Ticker.h>
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+Ticker mqttLDRTicker;
 
 const int ledPin = 2;
 const int lightSensorPin = 34;
 int lightThreshold = 50; 
 
-void setup_wifi() 
+namespace
 {
-  delay(10);
-  Serial.println("Connecting to Wi-Fi...");
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) 
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("Connected!");
+    const char *ssid = WiFiSecrets::ssid;
+    const char *password = WiFiSecrets::pass;
+    const char *echo_topic = "esp32/echo_test";
+    const char* mqtt_topic_pub = "home/lightSensor";
+    const char* mqtt_topic_sub = "home/ledControl";
+    unsigned int publish_count = 0;
+    uint16_t keepAlive = 15;    
+    uint16_t socketTimeout = 5; 
 }
 
 void callback(char* topic, byte* payload, unsigned int length) 
